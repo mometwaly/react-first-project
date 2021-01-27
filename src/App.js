@@ -1,23 +1,19 @@
-import './App.css';
-import Greet from './components/Greet'
-import Welcome from './components/Welcome'
-import Hello from './components/Hello'
-import Message from './components/Message'
-import Counter from './components/Counter' 
-
+import Layout from './components/Layout/Layout'
+import BergerBuilder from './containers/BergerBuilder/BergerBuilder'
+import Checkout from './containers/Checkout/Checkout'
+import { Route, Switch } from 'react-router-dom'
+import Orders from './containers/Orders/Orders'
 function App() {
   return (
-    <div className="App">
-      <Counter />
-      {/*<Greet  name="Mohamed"/>
-      <Greet  name="Ahmed"/>
-      <Greet  name="Metwaly"/>
-      <Welcome name="Mohamed"/>
-      <Welcome name="Ahmed"/>
-      <Welcome name="Metwaly"/>
-      <Hello />
-      <Message />*/}
-  </div>
+    <div>
+      <Layout>
+        <Switch>
+          <Route path="/checkout" component={Checkout} />
+          <Route path="/orders" exact component={Orders} />
+          <Route path="/" exact component={BergerBuilder} />
+        </Switch>
+      </Layout>
+    </div>
   );
 }
 
