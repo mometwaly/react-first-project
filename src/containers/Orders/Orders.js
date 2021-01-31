@@ -1,32 +1,25 @@
 import React, { Component } from 'react'
 import Order from '../../components/Order/Order'
 import axios from '../../axios-orders'
+import { connect } from 'react-redux'
+import * as actions from '../../store/actions/index'
 export class Orders extends Component {
-    state ={
-        orders : []
-    }
-    componentDidMount(){
-        axios.get('/orders.json').then(res=>{
-            let fetchedData = []
-            for(let key in res.data){
-                fetchedData.push({
-                   ...res.data[key],
-                   id: key
-                })
-            }
-            this.setState({orders : fetchedData})
-            console.log(this.state.orders)
-            
-        })
+    componentDidMount() {
+        this.props.onFetchOrder(this.props.token);
     }
     render() {
-        let gettenOrder = [...this.state.orders]
-        let orders = gettenOrder.map(order =>{
-            return <Order 
-            key={order.id}
-            ingredients={order.ingredients}
-            price = {+order.price} />
-        })
+        let orders = null;
+        if (this.props.orders) {
+            //console.log(this.props.orders)
+            let gettenOrder = [...this.props.orders]
+            orders = gettenOrder.map(order => {
+                return <Order
+                    key={order.id}
+                    ingredients={order.ingredients}
+                    price={+order.price} />
+            })
+
+        }
         return (
             <div>
                 {orders}
@@ -34,5 +27,16 @@ export class Orders extends Component {
         )
     }
 }
+const mapStateToProps = state => {
+    return {
+        orders: state.order.orders,
+        token : state.auth.token
+    }
+}
+const mapDispatchToProps = dispatch => {
+    return {
+        onFetchOrder: (token) => dispatch(actions.fetchOrdersStart(token))
+    }
+}
 
-export default Orders
+export default connect(mapStateToProps, mapDispatchToProps)(Orders) 

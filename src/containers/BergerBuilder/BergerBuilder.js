@@ -2,27 +2,18 @@ import React, { Component } from 'react'
 import Aux from '../../hoc/Auc'
 import Berger from '../../components/Berger/Berger'
 import BuildControls from '../../components/Berger/BuildControls/BuildControls'
-import axios from '../../axios-orders'
+//import axios from '../../axios-orders'
 import Spinner from '../../UI/Spinner/Spinner'
-const INGREDIENT_PRICES = {
-    salad: 0.5,
-    meat: 1.3,
-    bacon: 0.7,
-    cheese: 0.4
-}
+import { connect } from 'react-redux'
+import * as burgerBuilderActions from '../../store/actions/index'
+
 class BergerBuilder extends Component {
     state = {
-        ingredients: null,
-        totalPrice: 4,
-        isPurshasable: false,
         loading: false
 
     }
     componentDidMount() {
-        axios.get('/ingredients.json').then(res => {
-            console.log(res.data)
-            this.setState({ ingredients: res.data })
-        })
+        this.props.onInitIngredients()
     }
     onPharchesOrder = (ingredients) => {
         const sum = Object.keys(ingredients).map(ingKey => {
@@ -30,64 +21,34 @@ class BergerBuilder extends Component {
         }).reduce((sum, el) => {
             return sum + el
         }, 0)
-        this.setState({
-            isPurshasable: sum > 0
-        })
-    }
-    addIngredientHandeler = (type) => {
-        const oldCount = this.state.ingredients[type];
-        const updatedCount = oldCount + 1;
-        const updatedIngredient = {
-            ...this.state.ingredients
-        }
-        updatedIngredient[type] = updatedCount;
-        const priceAddition = INGREDIENT_PRICES[type]
-        const oldPrice = this.state.totalPrice;
-        const updatedTotalPrice = oldPrice + priceAddition
+        return sum > 0
 
-        this.setState({
-            totalPrice: updatedTotalPrice,
-            ingredients: updatedIngredient
-        })
-        this.onPharchesOrder(updatedIngredient)
     }
-    removeIngredientHandeler = (type) => {
-        const oldCount = this.state.ingredients[type];
-        if (oldCount <= 0) {
-            return;
-        }
-        const newCount = oldCount - 1;
 
-        const updatedIngredient = {
-            ...this.state.ingredients
-        }
-        updatedIngredient[type] = newCount;
-        const priceDeduction = INGREDIENT_PRICES[type];
-        const oldPrice = this.state.totalPrice;
-        const newPrice = oldPrice - priceDeduction
-        this.setState({
-            ingredients: updatedIngredient,
-            totalPrice: newPrice
-        })
-        this.onPharchesOrder(updatedIngredient)
-    }
     onOrder = () => {
-        const queryParams = [];
-        for(let i in this.state.ingredients){
-            queryParams.push(encodeURIComponent(i)+'='+encodeURIComponent(this.state.ingredients[i]))
+        /*const queryParams = [];
+        for (let i in this.state.ingredients) {
+            queryParams.push(encodeURIComponent(i) + '=' + encodeURIComponent(this.state.ingredients[i]))
         }
-        queryParams.push('price='+this.state.totalPrice)
+        queryParams.push('price=' + this.state.totalPrice)
         const queryString = queryParams.join('&');
         this.props.history.push({
-            pathname : '/checkout',
-            search : '?'+queryString
+            pathname: '/checkout',
+            search: '?' + queryString
 
-        })
+        })*/
+        if(!this.props.isAuthenticated){
+            this.props.history.push('/auth')
+        }
+        else{
+            this.props.history.push('/checkout')
+        }
+        
 
     }
     render() {
         const disabledIngredients = {
-            ...this.state.ingredients
+            ...this.props.ings
         }
         for (let item in disabledIngredients) {
             disabledIngredients[item] = disabledIngredients[item] <= 0
@@ -96,27 +57,43 @@ class BergerBuilder extends Component {
         if (this.state.loading) {
             spinner = <Spinner />
         }
-        let berger=<Spinner/>
-        if (this.state.ingredients) {
+        let berger = <Spinner />
+        if (this.props.ings) {
             berger = (
                 <Aux>
-                    <Berger ingredients={this.state.ingredients} />
+                    <Berger ingredients={this.props.ings} />
 
-                    <BuildControls ingredientAdded={this.addIngredientHandeler}
-                        ingredientRemoved={this.removeIngredientHandeler}
+                    <BuildControls ingredientAdded={this.props.onIngredientAdded}
+                        ingredientRemoved={this.props.onIngredientRemoved}
                         disabledIngredients={disabledIngredients}
-                        price={this.state.totalPrice}
-                        parched={this.state.isPurshasable}
-                        clicked={this.onOrder} />
+                        price={this.props.price}
+                        parched={() => this.onPharchesOrder(this.props.ings)}
+                        clicked={this.onOrder}
+                        isAuth={this.props.isAuthenticated} />
                 </Aux>
             )
         }
         return (
             <Aux>
-                {spinner}
+                {/*spinner*/}
                 {berger}
             </Aux>
         )
     }
 }
-export default BergerBuilder
+const mapStateToProps = state => {
+    return {
+        ings: state.bergerBuilder.ingredients,
+        price: state.bergerBuilder.totalPrice,
+        isAuthenticated : state.auth.token !== null
+    }
+}
+
+const mapDispatchToProps = dispatch => {
+    return {
+        onIngredientAdded: (ingName) => dispatch(burgerBuilderActions.addIngredient(ingName)),
+        onIngredientRemoved: (ingName) => dispatch(burgerBuilderActions.removeIngredient(ingName)),
+        onInitIngredients: () => dispatch(burgerBuilderActions.intiateIngredients())
+    }
+}
+export default connect(mapStateToProps, mapDispatchToProps)(BergerBuilder)

@@ -1,6 +1,8 @@
 import React, { Component } from 'react'
 import axios from '../../../axios-orders'
 import Input from '../../../UI/Input/Input'
+import { connect } from 'react-redux'
+import * as actions from '../../../store/actions/index'
 export class ContactData extends Component {
     state = {
         orderForm: {
@@ -53,8 +55,8 @@ export class ContactData extends Component {
         }
 
     }
-    checkValidaty(){
-        
+    checkValidaty() {
+
     }
     onOrderHandeler = (event) => {
         event.preventDefault();
@@ -63,18 +65,11 @@ export class ContactData extends Component {
             formElement[element] = this.state.orderForm[element].value;
         }
         const order = {
-            ingredients: this.props.ingredients,
+            ingredients: this.props.ings,
             price: this.props.price,
             orderData: formElement
         }
-        console.log(order)
-        axios.post('/orders.json', order).then(res => {
-            console.log(res);
-            this.props.history.push('/')
-        }).catch(err => {
-            console.log(err)
-
-        })
+        this.props.onOrderParchased(order,this.props.token);
     }
     inputChangedHandeler = (event, identifier) => {
         const UpdatedOrderForm = {
@@ -114,5 +109,18 @@ export class ContactData extends Component {
         )
     }
 }
+const mapStateToProps = state => {
+    return {
+        ings: state.bergerBuilder.ingredients,
+        price: state.bergerBuilder.totalPrice,
+        token : state.auth.token
+    }
+}
+const mapDispatchToProps = dispatch => {
+    return {
+        //onOrderParchased : dispatch((orderData)=>actions.purchaseBurgerStart(orderData))
+        onOrderParchased: (orderData,token) => dispatch(actions.purchaseBurgerStart(orderData,token)),
+    }
+}
 
-export default ContactData
+export default connect(mapStateToProps, mapDispatchToProps)(ContactData)
